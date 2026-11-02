@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "soundsketch-agent"
+version = "0.2.0"
+description = "Natural-language-driven controllable noise synthesis and auditory expression agent"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "SoundSketch contributors"}]
+keywords = ["audio", "dsp", "noise", "agent", "sound-synthesis"]
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26,<3", "scipy>=1.11,<2", "Flask>=3,<4"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+
+[project.scripts]
+soundsketch = "soundsketch.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["soundsketch*"]
+
+[tool.setuptools.package-data]
+soundsketch = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

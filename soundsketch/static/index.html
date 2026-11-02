@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>SoundSketch · 听感表达工作台</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="SoundSketch 首页"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span>SoundSketch<small>城市生活噪声 · 听感表达工作台</small></span></a>
+    <div class="header-meta"><span class="local-pill"><i></i>仅在本地保存</span><span id="mode-badge" class="mode-pill">正在检查运行模式</span></div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow">把难以描述的声音，变成可以一起听的示意</p><h1>从「有点像」到「就是这种听感」。</h1><p>描述、比较、微调。保留你确认的特征，为下一次沟通留下一份声音草图。</p></div>
+      <div class="step-line" aria-label="操作步骤"><span><b>01</b> 描述</span><i></i><span><b>02</b> 参数方案</span><i></i><span><b>03</b> 试听与调整</span><i></i><span><b>04</b> 导出</span></div>
+    </section>
+
+    <div class="safety-note"><span aria-hidden="true">◈</span><p><strong>这里生成的是合成听感示意。</strong>它不证明真实声源、地点或故障。请从低音量开始；数字幅值不等于真实声压级。</p></div>
+    <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <section class="panel describe-panel">
+          <div class="section-title"><span class="step-number">01</span><h2>描述你听到的声音</h2></div>
+          <form id="create-form">
+            <label for="description">听感描述 <span class="required">必填</span></label>
+            <textarea id="description" rows="4" maxlength="4000" required placeholder="例如：房间里有持续低沉的嗡嗡声，像远处的马达，声音一阵强一阵弱。来源不确定。"></textarea>
+            <label for="kind">从哪种听感开始</label>
+            <select id="kind"><option value="auto">根据描述选择</option><option value="hum">嗡鸣 · 持续、低沉、有谐波</option><option value="whistle">尖啸 · 细、尖、持续音调</option><option value="knock">间歇敲击 · 一下一下、带衰减</option></select>
+            <details class="extra-context"><summary>补充场景与时间规律 <span>可选</span></summary><label for="scene">发生场景</label><input id="scene" maxlength="1000" placeholder="例如：卧室，夜间关窗时"><label for="timing">时间规律</label><input id="timing" maxlength="1000" placeholder="例如：每隔几秒，持续十多分钟"></details>
+            <label class="check-line model-choice"><input id="use-model" type="checkbox" disabled><span>同意使用模型整理文字描述 <small id="planner-note">检查模型配置中；勾选后会将描述、场景、时间规律和参数发送到配置的规划 API，不发送录音。</small></span></label>
+            <button class="primary full" id="create-button" type="submit">解析听感，查看方案 <span aria-hidden="true">→</span></button>
+            <p class="microcopy">先将文字转为合成参数，再由 Python 生成 2–3 个候选。来源可以未知。</p>
+          </form>
+        </section>
+        <section class="panel saved-panel"><div class="section-title"><h2>继续本地会话</h2><span class="tag">JSON + WAV</span></div><label for="saved-sessions" class="sr-only">已保存会话</label><select id="saved-sessions"><option value="">选择已保存的会话</option></select><button id="open-session" class="secondary full" type="button">打开会话</button><p class="microcopy">原始录音独立保存，不会被合成音频覆盖。</p></section>
+        <section class="evidence-guide"><h3>三种信息，各有边界</h3><p><span class="dot observation"></span><b>参考录音</b>是用户提供的观测，来源待核实，可本地测量。</p><p><span class="dot prior"></span><b>经验案例</b>是有出处的先验；首版尚无真实案例。</p><p><span class="dot synthesis"></span><b>生成音频</b>是你的表达草图，不能作为新的声源证据。</p></section>
+      </aside>
+
+      <div class="work-area">
+        <section id="plan-panel" class="panel plan-panel" aria-labelledby="plan-title" hidden>
+          <div class="section-title spread"><div class="title-group"><span class="step-number">02</span><h2 id="plan-title">这次的参数方案</h2></div><span id="plan-mode" class="tag"></span></div>
+          <p id="plan-note" class="mode-note"></p>
+          <p id="plan-context" class="plan-context"></p>
+          <div id="plan-content"></div>
+          <p id="plan-preserved" class="plan-preserved"></p>
+          <div class="plan-actions"><button id="apply-plan" type="button" class="primary">按方案生成候选</button><button id="cancel-plan" type="button" class="text-button">取消方案</button></div>
+          <p class="microcopy">这些数值是生成设定，不是现场测量值。应用时由本地 Python DSP 合成，不会再次调用文字模型。</p>
+        </section>
+        <section id="empty-state" class="panel empty-state">
+          <div class="empty-heading"><span class="tag">LOCAL AUDIO LAB</span><h2>先把听感说清，再听见差异</h2><p>自然语言 → 可检查的参数方案 → Python DSP → 试听反馈<br>文字模型负责整理描述，声音由本地合成器生成。</p></div>
+          <div class="sound-previews" aria-hidden="true"><div><div class="wave hum-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><b>嗡鸣</b><span>低沉、谐波、缓慢起伏</span></div><div><div class="wave whistle-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><b>尖啸</b><span>音调、带宽、细微波动</span></div><div><div class="wave knock-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><b>间歇敲击</b><span>间隔、衰减、撞击音色</span></div></div>
+          <div class="empty-footer"><b>无需 API 密钥即可完成全部本地流程</b><span>固定参数与种子 · 单项调整 · 历史恢复 · WAV 导出</span></div>
+        </section>
+
+        <div id="session-work" hidden>
+          <section class="panel candidates-panel">
+            <div class="section-title spread"><div class="title-group"><span class="step-number">03</span><h2>试听并选择一个起点</h2></div><span id="version-badge" class="tag"></span></div>
+            <p id="session-description" class="session-description"></p><p id="session-notice" class="mode-note"></p>
+            <details id="version-plan" class="version-plan" hidden><summary>查看本版本的参数方案</summary><div id="version-plan-content"></div></details>
+            <div class="listen-note">◌ 不自动播放 · 默认播放音量 15% · 建议先调低设备音量</div>
+            <div id="candidates" class="candidate-grid"></div>
+          </section>
+
+          <section class="panel refinement-panel">
+            <div class="section-title spread"><h2>保留接近的，调整有差异的</h2><button id="undo" type="button" class="text-button">↶ 恢复上一版本</button></div>
+            <p id="selection-hint" class="muted">先选择一个候选，再进行调整。</p>
+            <form id="feedback-form"><label for="feedback">这次改什么、保留什么？</label><div class="input-action"><input id="feedback" maxlength="2000" placeholder="例如：更低沉，音量不变" required><button type="submit" class="primary" id="feedback-button">预览参数改动</button></div></form>
+            <div class="quick-feedback"><button type="button" data-feedback="更低沉">更低沉</button><button type="button" data-feedback="起伏慢一点">起伏慢一点</button><button type="button" data-feedback="敲击间隔更长">敲击间隔更长</button></div>
+            <div id="clarification" class="clarification" role="status" hidden></div>
+            <details id="parameter-details"><summary>查看参数、精确修改与锁定 <span>仅提交改动项</span></summary><form id="parameter-form"><div class="parameter-help">锁定已确认的特征，后续修改将保留它。频率、节奏和幅值是合成参数，不是现场测量值。</div><div id="parameter-grid" class="parameter-grid"></div><button type="submit" class="secondary" id="parameter-button">预览表单参数改动</button></form></details>
+          </section>
+
+          <section class="panel comparison-panel"><div class="section-title spread"><h2>A / B 对照试听</h2><span class="tag">历史候选</span></div><p class="muted compact">比较不同版本，播放任意一个会暂停另一个。</p><div class="ab-grid"><div><label for="compare-a"><span class="ab-letter">A</span> 候选 / 版本</label><select id="compare-a"></select><div id="audio-a"></div></div><div><label for="compare-b"><span class="ab-letter">B</span> 候选 / 版本</label><select id="compare-b"></select><div id="audio-b"></div></div></div><div class="history-row"><label for="history">恢复历史版本</label><select id="history"></select><button id="restore" type="button" class="secondary">恢复此版本</button></div></section>
+
+          <section class="panel reference-panel"><div class="section-title spread"><h2>参考录音与本地分析</h2><span class="tag observation-tag">用户提供的观测</span></div><p class="muted compact">可选上传 PCM WAV，最长 30 秒、最大 20 MB。录音来源真实性未经独立核实。上传到当前本机服务后保留原文件；本地分析不会调用外部 API。</p><form id="reference-form" class="upload-row"><label class="sr-only" for="reference-file">选择原始参考录音</label><input type="file" id="reference-file" accept="audio/wav,.wav" required><button type="submit" class="secondary">保存并本地分析</button></form><div id="references"></div><p id="audio-mode-note" class="microcopy"></p></section>
+
+          <section class="panel export-panel"><div class="section-title"><span class="step-number">04</span><h2>确认这份听感表达</h2></div><label for="final-description">给沟通对象的听感描述</label><textarea id="final-description" rows="2" maxlength="4000" placeholder="描述哪些特征接近实际听感、哪些还有差异；来源可以保持未知。"></textarea><div class="export-actions"><button id="confirm" type="button" class="primary">确认当前选中声音</button><button id="download" type="button" class="secondary" disabled>下载 WAV 与记录包 ↓</button><span id="confirmed-state" class="muted"></span></div><p class="microcopy">导出包含确认的 WAV、听感描述、生成参数及会话历史（用户描述、反馈和分析）。原始录音不包含在记录包中，分享前请检查其中的个人信息。它是沟通材料，不能替代现场声学测量或故障诊断。</p></section>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer><span>SoundSketch · 参数规划与本地合成</span><span>先表达听感，再共同核实。</span></footer>
+</body>
+</html>
